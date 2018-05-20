@@ -34,12 +34,8 @@
           $('#messages').append($('<li>')).append($('<b>').text(msgp[0])).append($('<i>').text(msgp[1]));
           window.scrollTo(0,5000);
         });
-        socket.on('new_user', function(username,users){
-          console.log(users[socket.id]);
+        socket.on('new_user', function(username){
           $.notify(username+" çevrimiçi oldu!","info");
-          for(element in users){
-            $('#online-liste').append($('<li>').text(users[element].name));
-          }
         });
         socket.on('connect', function(){
             user = prompt("Enter Your Name Please");
@@ -47,11 +43,8 @@
             socket.emit('new_user', user);
           return false;
         });
-        socket.on('user_gone',function(username,users){
+        socket.on('user_gone',function(username){
           $.notify(username+" çevrimdışı oldu!","warning");
-          for(element in users){
-            $('#online-liste').append($('<li>').text(users[element].name));
-          }
         });
       });
     </script>
