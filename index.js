@@ -1,20 +1,24 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var new_user;
+
+var users = [];
+
 
 app.get('/', function(req, res){
   res.sendFile(__dirname+'/index.html');
 });
 
 io.on('connection', function(socket){
-  socket.on('online_user', function(user){
-    new_user = user;
-    socket.broadcast.emit('online_user',user);
+  socket.on('new_user', function(user){
+    users[socket.id] = {id : socket.id, name : user};
+    socket.broadcast.emit('new_user',user,users);
+    console.log(user+' cevrimici oldu!\nid : '+socket.id+'\n');
   });
-  console.log(new_user+' online oldu!');
   socket.on('disconnect', function(){
-    console.log('1 kisi offline oldu!');
+    console.log(users[socket.id].name+' cevrimdisi oldu!');
+    socket.broadcast.emit('user_gone',users[socket.id].name,users);
+    delete users[socket.id];
   });
   socket.on('new_message', function(msg){
     io.emit('new_message',msg);

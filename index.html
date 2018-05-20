@@ -3,7 +3,7 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>atlilar v2.0</title>
+    <title>simple-chat-app</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font: 13px Helvetica, Arial; }
@@ -14,61 +14,75 @@
     </style>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script src="https://rawgit.com/notifyjs/notifyjs/master/dist/notify.js"></script>
-    <script src="/js/notify.js"></script>
     <script>
       $(function(){
         var user;
         var socket = io();
         $('#mf').submit(function(){
-          socket.emit('new_message',user+" : "+$('#m').val());
+          socket.emit('new_message',user+" : ,"+$('#m').val());
           $('#m').val('');
           return false;
         });
         socket.on('new_message', function(msg){
-          $('#messages').append($('<li>').text(msg));
+          var msgp = msg.split(",");
+          $('#messages').append($('<li>')).append($('<b>').text(msgp[0])).append($('<i>').text(msgp[1]));
           window.scrollTo(0,5000);
         });
-        socket.on('online_user', function(username){
+        socket.on('new_user', function(username,users){
+          console.log(users[socket.id]);
           $.notify(username+" çevrimiçi oldu!","info");
+          for(element in users){
+            $('#online-liste').append($('<li>').text(users[element].name));
+          }
         });
-        $('#uf').submit(function(){
-          socket.emit('online_user', $('#u').val());
-          user = $('#u').val();
-          document.getElementById("ufd").innerHTML=" ";
+        socket.on('connect', function(){
+            user = prompt("Enter Your Name Please");
+            $('#name').append($('<h5>').text(user));
+            socket.emit('new_user', user);
           return false;
-        })
+        });
+        socket.on('user_gone',function(username,users){
+          $.notify(username+" çevrimdışı oldu!","warning");
+          for(element in users){
+            $('#online-liste').append($('<li>').text(users[element].name));
+          }
+        });
       });
     </script>
   </head>
   <body>
-    <div id="ufd" class="form" style="padding-top: 10px;">
-      <form action="" id="uf">
-        <div class="form-group">
-          <input type="username" class="form-control" placeholder="NICKNAME" id="u">
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">Giriş</button>
-      </form>
-    </div>
-
-    <div class="list-group">
-      <a href="#" class="list-group-item list-group-item-action flex-column align-items-start active">
-        <div class="d-flex w-100 justify-content-between">
-          <h5 class="mb-1">simple-chat-app</h5>
-        </div>
-      </a>
-      <li id="messages"></li>
-    </div>
-
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a id="name" class="navbar-brand" href="#"></a>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <!-- <ul class="navbar-nav mr-auto">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Çevrimiçi Kullanıcılar
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <ul id="online-list">
+              </ul>
+            </div>
+          </li>
+        </ul> -->
+      </div>
+    </nav>
 
 
-    <form style="position:relative; bottom:0; padding:3px; width:100%;" action="" id="mf">
+    <div class="list-group" style="position:relative;">
+      <ul id="messages" style="margin-bottom:10;"></ul>
+    <form style="position:sticky; bottom:0; padding:3px; width:100%;" action="" id="mf">
       <div class="form-group">
         <input type="message" class="form-control" id="m">
       </div>
       <button type="submit" class="btn btn-primary btn-block">Gönder</button>
     </form>
+    </div>
   </body>
 </html>
