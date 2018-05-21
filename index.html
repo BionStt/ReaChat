@@ -36,16 +36,20 @@
         });
         socket.on('new_user', function(username){
           $.notify(username+" çevrimiçi oldu!","info");
+          $('#online-list').append($('<li>').id(username).text(username));
         });
         socket.on('connect', function(){
             user = prompt("Enter Your Name Please");
             $('#name').append($('<h5>').text(user));
             socket.emit('new_user', user);
-          return false;
+            return false;
         });
         socket.on('user_gone',function(username){
           $.notify(username+" çevrimdışı oldu!","warning");
         });
+        // socket.on('online-list-update',function(username){
+        //
+        // });
       });
     </script>
   </head>
@@ -53,7 +57,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <a id="name" class="navbar-brand" href="#"></a>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <!-- <ul class="navbar-nav mr-auto">
+        <ul class="navbar-nav mr-auto">
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               Çevrimiçi Kullanıcılar
@@ -63,7 +67,7 @@
               </ul>
             </div>
           </li>
-        </ul> -->
+        </ul>
       </div>
     </nav>
 
