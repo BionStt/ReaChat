@@ -15,40 +15,42 @@ module.exports = {
       });
     });
   },
-  find_user : function(uid,callback){
+  delete_user : function(uid,callback){
     mongodb.connect(url, function(err,db){
       if(err) throw err;
       dbo = db.db('chatdb');
-      dbo.collection("users").findOne({id:uid}, function(err,res){
+      dbo.collection("users").findOneAndDelete({id:uid}, function(err,res){
         if (err) {
-          throw err;
-        }
-        callback(null,res.name);
-        db.close();
+              throw err;
+            }
+            if (!res) {
+              callback(null, 404);
+            }
+           else callback(null, res.value.name);
       });
-    });
-  },
-  delete_user : function(uid){
-    mongodb.connect(url, function(err,db){
-      if(err) throw err;
-      dbo = db.db('chatdb');
-      dbo.collection("users").deleteOne({id:uid});
       db.close();
     });
   },
-  update_list : function(){
+  update_list : function(callback){
     mongodb.connect(url, function(err,db){
       if (err) {
         throw err;
       }
       dbo = db.db('chatdb');
-      dbo.collection("users").findOne({},function(err,res){
+      dbo.collection("users").find({}).toArray(function(err,res){
         if (err) {
           throw err;
         }
-        return res;
+        if (!res) {
+          console.log(404);
+        }
+        else {
+          res.forEach(function(element){
+          console.log(element.name);
+          });
+        }
       });
+      db.close();
     });
-    db.close();
   }
 }
