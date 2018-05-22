@@ -12,74 +12,133 @@
       #messages li:nth-child(odd) { background: #eee; }
       #uf { background: white; padding: 0px; position: absolute; width: 100%;height: 100%; z-index: 3;}
     </style>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
+    <link rel="stylesheet" href="styles/izitoast/iziToast.min.css">
+    <script src="scripts/izitoast/iziToast.min.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/solid.css" integrity="sha384-Rw5qeepMFvJVEZdSo1nDQD5B6wX0m7c5Z/pLNvjkB14W6Yki1hKbSEQaX9ffUbWe" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/fontawesome.css" integrity="sha384-GVa9GOgVQgOk+TNYXu7S/InPTfSDTtBalSgkgqQ7sCik56N9ztlkoTr2f/T44oKV" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
-    <script src="https://rawgit.com/notifyjs/notifyjs/master/dist/notify.js"></script>
     <script>
       $(function(){
-        var user;
-        var socket = io();
-        $('#mf').submit(function(){
-          socket.emit('new_message',user+" : ,"+$('#m').val());
-          $('#m').val('');
-          return false;
-        });
+          var socket = io();
+          var user;
+          var socket_id;
+
         socket.on('new_message', function(msg){
           var msgp = msg.split(",");
-          $('#messages').append($('<li>')).append($('<b>').text(msgp[0])).append($('<i>').text(msgp[1]));
-          window.scrollTo(0,5000);
+          if (socket.id == socket_id) {
+            iziToast.show({
+              timeout: false,
+              target: '.message_container',
+              rtl: true,
+              message: msgp[1],
+              position: 'bottomRight',
+              balloon: true,
+              close: false,
+              drag: false
+            });
+          }
+          else {
+            iziToast.show({
+              timeout: false,
+              target: '.message_container',
+              color: 'blue',
+              title: msgp[0],
+              message: msgp[1],
+              position: 'bottomLeft',
+              balloon: true,
+              close: false,
+              drag: false
+            });
+          }
         });
         socket.on('new_user', function(username){
-          $.notify(username+" çevrimiçi oldu!","info");
-          $('#online-list').append($('<li>').id(username).text(username));
+          iziToast.success({
+            title: username,
+            message: 'çevrimiçi oldu!',
+            position: 'topRight',
+            timeout: 2500,
+            icon: 'fas fa-globe',
+          });
         });
         socket.on('connect', function(){
-            user = prompt("Enter Your Name Please");
-            $('#name').append($('<h5>').text(user));
-            socket.emit('new_user', user);
-            return false;
+            socket_id = socket.id;
+            iziToast.show({
+              title: 'GİRİŞ',
+              timeout: false,
+              overlay: true,
+              theme: 'dark',
+              zindex: 999,
+              icon: 'icon-person',
+              title: 'Hoşgeldiniz',
+              message: 'Mesaj yazabilmek için lütfen sizi tanıtan bir isim giriniz!',
+              position: 'center',
+              drag: false,
+              close: false,
+              progressBarColor: 'rgb(0, 255, 184)',
+              inputs: [
+                  ['<input type="text">', 'keyup', function (instance, toast, input, e) {
+                      console.info(input.value);
+                  }, true],
+              ],
+              buttons: [
+                  ['<button>Giriş</button>', function (instance, toast, button, e, inputs) {
+                    console.info(socket_id);
+                    user = inputs[0].value;
+                      socket.emit('new_user', user);
+                      instance.hide({
+                          transitionOut: 'fadeOutUp'
+                          }, toast, 'Kapat');
+                  }, true]
+              ],
+              onOpening: function(instance, toast){
+                  console.info('İsim Bekleniyor!');
+              },
+              onClosing: function(instance, toast, closedBy){
+                  console.info('closedBy: ' + closedBy);
+                  iziToast.show({
+                    timeout: false,
+                    theme: 'dark',
+                    zindex: 999,
+                    position: 'bottomCenter',
+                    target: '.text_area',
+                    close: false,
+                    drag: false,
+                    inputs: [
+                        ['<input type="text">', 'keyup', function (instance, toast, input, e) {
+                            console.info(input.value);
+                        }, true]
+                      ],
+                    buttons: [
+                        ['<button>GÖNDER</button>', function(instance, toast, button, e, inputs){
+                          socket.emit('new_message',user+" : ,"+inputs[0].value);
+                          inputs[0].value = " ";
+                        },]
+                    ]
+                });
+              }
+            });
         });
         socket.on('user_gone',function(username){
-          $.notify(username+" çevrimdışı oldu!","warning");
+          iziToast.warning({
+            title: username,
+            message: 'çevrimdışı oldu!',
+            position: 'topRight',
+            timeout: 2500,
+            icon: 'fas fa-walking',
+          });
         });
-        // socket.on('online-list-update',function(username){
-        //
-        // });
       });
     </script>
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a id="name" class="navbar-brand" href="#"></a>
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav mr-auto">
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Çevrimiçi Kullanıcılar
-            </a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              <ul id="online-list">
-              </ul>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </nav>
-
-
-    <div class="list-group" style="position:relative;">
-      <ul id="messages" style="margin-bottom:10;"></ul>
-    <form style="position:sticky; bottom:0; padding:3px; width:100%;" action="" id="mf">
-      <div class="form-group">
-        <input type="message" class="form-control" id="m">
-      </div>
-      <button type="submit" class="btn btn-primary btn-block">Gönder</button>
-    </form>
-    </div>
+    <div class="message_container" style="position:relative; bottom:0;"></div>
+    <div class="text_area" style="position:absolute;bottom:0;"></div>
   </body>
 </html>
