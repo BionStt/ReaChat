@@ -11,9 +11,11 @@
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #eee; }
       #uf { background: white; padding: 0px; position: absolute; width: 100%;height: 100%; z-index: 3;}
+
     </style>
 
     <link rel="stylesheet" href="styles/izitoast/iziToast.min.css">
+    <link rel="stylesheet" href="styles/chat-bubble.css">
     <script src="scripts/izitoast/iziToast.min.js"></script>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
@@ -32,31 +34,14 @@
 
         socket.on('new_message', function(msg){
           var msgp = msg.split(",");
-          if (socket.id == socket_id) {
-            iziToast.show({
-              timeout: false,
-              target: '.message_container',
-              rtl: true,
-              message: msgp[1],
-              position: 'bottomRight',
-              balloon: true,
-              close: false,
-              drag: false
-            });
+
+          if (String(socket_id) === String(msgp[2])) {
+              $('#message_container').append($('<div class="bubble you">').text(msgp[1]));
           }
           else {
-            iziToast.show({
-              timeout: false,
-              target: '.message_container',
-              color: 'blue',
-              title: msgp[0],
-              message: msgp[1],
-              position: 'bottomLeft',
-              balloon: true,
-              close: false,
-              drag: false
-            });
+            $('#message_container').append($('<div class="bubble me">').text(msgp[0]+msgp[1]));
           }
+          window.scrollTo(0,document.body.scrollHeight);
         });
         socket.on('new_user', function(username){
           iziToast.success({
@@ -90,11 +75,23 @@
               buttons: [
                   ['<button>Giriş</button>', function (instance, toast, button, e, inputs) {
                     console.info(socket_id);
-                    user = inputs[0].value;
-                      socket.emit('new_user', user);
-                      instance.hide({
-                          transitionOut: 'fadeOutUp'
-                          }, toast, 'Kapat');
+                    if (inputs[0].value.length > 3) {
+                        user = inputs[0].value;
+                        socket.emit('new_user', user);
+                        instance.hide({
+                            transitionOut: 'fadeOutUp'
+                            }, toast, 'Kapat');
+                    }
+                    else{
+                      iziToast.warning({
+                        id: 'no_usr',
+                        toastOnce: true,
+                        title: 'Hata',
+                        message: 'Lütfen en az 3 karakter giriniz!',
+                        position: 'center',
+                        timeout: 1000
+                      });
+                    }
                   }, true]
               ],
               onOpening: function(instance, toast){
@@ -103,6 +100,7 @@
               onClosing: function(instance, toast, closedBy){
                   console.info('closedBy: ' + closedBy);
                   iziToast.show({
+                    title: user,
                     timeout: false,
                     theme: 'dark',
                     zindex: 999,
@@ -117,7 +115,18 @@
                       ],
                     buttons: [
                         ['<button>GÖNDER</button>', function(instance, toast, button, e, inputs){
-                          socket.emit('new_message',user+" : ,"+inputs[0].value);
+                          if (inputs[0].value.length > 2) socket.emit('new_message',user+" : ,"+inputs[0].value);
+                          else{
+                              iziToast.warning({
+                                id: 'no_msg',
+                                title: 'Hata',
+                                toastOnce: true,
+                                message: 'Boş mesaj Gönderemezsiniz',
+                                position: 'bottomCenter',
+                                target: '#message_container',
+                                timeout: 1000
+                              });
+                          }
                           inputs[0].value = " ";
                         },]
                     ]
@@ -138,7 +147,7 @@
     </script>
   </head>
   <body>
-    <div class="message_container" style="position:relative; bottom:0;"></div>
-    <div class="text_area" style="position:absolute;bottom:0;"></div>
+    <div id="message_container" style="position:relative; bottom:0; padding-bottom:100px;"></div>
+    <div class="text_area" style="position:fixed;bottom:0;"></div>
   </body>
 </html>

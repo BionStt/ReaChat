@@ -9,7 +9,7 @@ const database = require('./modules/database');
 
 app.use('/scripts/izitoast', express.static(__dirname + '/node_modules/izitoast/dist/js'));
 app.use('/styles/izitoast', express.static(__dirname + '/node_modules/izitoast/dist/css'));
-
+app.use('/styles', express.static(__dirname + '/styles'));
 
 app.get('/', function(req, res){
   res.sendFile(__dirname+'/index.html');
@@ -37,7 +37,7 @@ io.on('connection', function(socket){
   });
   socket.on('new_message', function(msg){
     console.log(msg);
-    io.emit('new_message',msg);
+    io.emit('new_message',msg+","+socket.id);
   });
 });
 
