@@ -31,12 +31,13 @@
           var socket = io();
           var user;
           var socket_id;
+          var channel;
 
         socket.on('new_message', function(msg){
           var msgp = msg.split(",");
 
           if (String(socket_id) === String(msgp[2])) {
-              $('#message_container').append($('<div class="bubble you">').text(msgp[1]));
+              $('#message_container').append($('<div style="background-color:#acaab8;" class="bubble you">').text(msgp[1]));
           }
           else {
             $('#message_container').append($('<div class="bubble me">').text(msgp[0]+msgp[1]));
@@ -68,16 +69,20 @@
               close: false,
               progressBarColor: 'rgb(0, 255, 184)',
               inputs: [
-                  ['<input type="text">', 'keyup', function (instance, toast, input, e) {
+                  ['<input type="text" placeholder="isim">', 'keyup', function (instance, toast, input, e) {
+                      console.info(input.value);
+                  }, true],
+                  ['<input type="text" placeholder="kanal">', 'keyup', function (instance, toast, input, e) {
                       console.info(input.value);
                   }, true],
               ],
               buttons: [
                   ['<button>Giriş</button>', function (instance, toast, button, e, inputs) {
                     console.info(socket_id);
-                    if (inputs[0].value.length > 3) {
+                    if (inputs[0].value.length > 3 && inputs[1].value.length > 3) {
                         user = inputs[0].value;
-                        socket.emit('new_user', user);
+                        channel = inputs[1].value;
+                        socket.emit('new_user', user+","+channel);
                         instance.hide({
                             transitionOut: 'fadeOutUp'
                             }, toast, 'Kapat');
@@ -87,7 +92,7 @@
                         id: 'no_usr',
                         toastOnce: true,
                         title: 'Hata',
-                        message: 'Lütfen en az 3 karakter giriniz!',
+                        message: 'Kullanıcı ve Kanal isimleri en az 3 karakter olmalıdır!',
                         position: 'center',
                         timeout: 1000
                       });
@@ -115,7 +120,7 @@
                       ],
                     buttons: [
                         ['<button>GÖNDER</button>', function(instance, toast, button, e, inputs){
-                          if (inputs[0].value.length > 2) socket.emit('new_message',user+" : ,"+inputs[0].value);
+                          if (inputs[0].value.length > 2) socket.emit('new_message',user+" : ,"+inputs[0].value+"<^>"+channel);
                           else{
                               iziToast.warning({
                                 id: 'no_msg',
