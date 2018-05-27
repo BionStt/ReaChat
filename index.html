@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no"/>
 
     <title>simple-chat-app</title>
     <style>
@@ -16,11 +16,14 @@
 
     <link rel="stylesheet" href="styles/izitoast/iziToast.min.css">
     <link rel="stylesheet" href="styles/chat-bubble.css">
+    <link rel="stylesheet" href="styles/sidenav.css">
     <script src="scripts/izitoast/iziToast.min.js"></script>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/solid.css" integrity="sha384-Rw5qeepMFvJVEZdSo1nDQD5B6wX0m7c5Z/pLNvjkB14W6Yki1hKbSEQaX9ffUbWe" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/fontawesome.css" integrity="sha384-GVa9GOgVQgOk+TNYXu7S/InPTfSDTtBalSgkgqQ7sCik56N9ztlkoTr2f/T44oKV" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/regular.css" integrity="sha384-EWu6DiBz01XlR6XGsVuabDMbDN6RT8cwNoY+3tIH+6pUCfaNldJYJQfQlbEIWLyA" crossorigin="anonymous">
+
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
@@ -31,22 +34,47 @@
           var socket = io();
           var user;
           var socket_id;
-          var channel;
+          var chnnel;
+          var i=0;
 
-        socket.on('new_message', function(msg){
-          var msgp = msg.split(",");
+        $('#message_container').on('click','.name',function(event){
+          iziToast.show({
+            title: event.target.textContent,
+            timeout: 10000,
+            message: 'Özel konuşma isteği gönder',
+            buttons: [
+              ['<button>EVET</button>', function(instance, toast, button, e, inputs){
+                socket.emit('private_conv',{sender_name: user, reciever_id: event.target.classList[1], reciever_name: event.target.textContent});
+                instance.hide({
+                    transitionOut: 'fadeOutUp'
+                  }, toast, 'evet');
+              }
+            ]
+          ],
+          position: 'topRight',
+        });
+        });
 
-          if (String(socket_id) === String(msgp[2])) {
-              $('#message_container').append($('<div style="background-color:#acaab8;" class="bubble you">').text(msgp[1]));
+        socket.on('new_message', function(data){
+          i=i+1;
+          if (String(socket_id) === String(data.sender_id)) {
+              $('#message_container').append($('<div class="bubble you">').text(data.message));
+              $('#'+socket_id+i).append($('<i style="float: right;" class="far fa-user">'));
           }
           else {
-            $('#message_container').append($('<div class="bubble me">').text(msgp[0]+msgp[1]));
+            $('#message_container').append($('<div class="bubble me" id="'+data.sender_id+i+'">'));
+            $('#'+data.sender_id+i).append($('<div id="'+data.sender_id+i+"msg"+'">'));
+            $('#'+data.sender_id+i+"msg").append($('<i class="fas fa-user">'));
+            $('#'+data.sender_id+i+"msg").append($('<b class="name '+data.sender_id+'">').text(data.sender_name));
+            $('#'+data.sender_id+i).append($('<br>'));
+            $('#'+data.sender_id+i).append(data.message);
+
           }
           window.scrollTo(0,document.body.scrollHeight);
         });
-        socket.on('new_user', function(username){
+        socket.on('new_user', function(new_user){
           iziToast.success({
-            title: username,
+            title: new_user,
             message: 'çevrimiçi oldu!',
             position: 'topRight',
             timeout: 2500,
@@ -55,7 +83,10 @@
         });
         socket.on('connect', function(){
             socket_id = socket.id;
+            chnnel = 'main_gate';
             iziToast.show({
+              id: 'giris',
+              toastOnce: true,
               title: 'GİRİŞ',
               timeout: false,
               overlay: true,
@@ -72,20 +103,17 @@
                   ['<input type="text" placeholder="isim">', 'keyup', function (instance, toast, input, e) {
                       console.info(input.value);
                   }, true],
-                  ['<input type="text" placeholder="kanal">', 'keyup', function (instance, toast, input, e) {
-                      console.info(input.value);
-                  }, true],
               ],
               buttons: [
                   ['<button>Giriş</button>', function (instance, toast, button, e, inputs) {
                     console.info(socket_id);
-                    if (inputs[0].value.length > 3 && inputs[1].value.length > 3) {
+                    if (inputs[0].value.length >= 3) {
                         user = inputs[0].value;
-                        channel = inputs[1].value;
-                        socket.emit('new_user', user+","+channel);
+                        socket.emit('new_user', {new_user: user, channel: chnnel});
                         instance.hide({
                             transitionOut: 'fadeOutUp'
                             }, toast, 'Kapat');
+                            document.title = chnnel;
                     }
                     else{
                       iziToast.warning({
@@ -105,6 +133,7 @@
               onClosing: function(instance, toast, closedBy){
                   console.info('closedBy: ' + closedBy);
                   iziToast.show({
+                    id: 'message_box',
                     title: user,
                     timeout: false,
                     theme: 'dark',
@@ -113,6 +142,7 @@
                     target: '.text_area',
                     close: false,
                     drag: false,
+                    toastOnce: true,
                     inputs: [
                         ['<input type="text">', 'keyup', function (instance, toast, input, e) {
                             console.info(input.value);
@@ -120,7 +150,7 @@
                       ],
                     buttons: [
                         ['<button>GÖNDER</button>', function(instance, toast, button, e, inputs){
-                          if (inputs[0].value.length > 2) socket.emit('new_message',user+" : ,"+inputs[0].value+"<^>"+channel);
+                          if (inputs[0].value.length > 2) socket.emit('new_message', {sender_name: user, message: inputs[0].value, channel: chnnel});
                           else{
                               iziToast.warning({
                                 id: 'no_msg',
@@ -136,6 +166,7 @@
                         },]
                     ]
                 });
+                openNav();
               }
             });
         });
@@ -148,11 +179,138 @@
             icon: 'fas fa-walking',
           });
         });
+        socket.on('private_conv',function(data){
+          iziToast.show({
+            title: 'Özel konuşma isteği',
+            message: data.sender_name+" adlı kişi size özel konuşma isteği gönderdi!",
+            position: 'topRight',
+            timeout: 10000,
+            icon: 'far fa-envelope',
+            buttons: [
+              ['<button>Kabul Et</button>',function(instance, toast, button, e){
+                socket.emit('private_conv_resp',{response: " adlı kişi özel konuşma isteğinizi kabul etti.", reciever_id: data.sender_id, sender_name: user});
+                instance.hide({
+                    transitionOut: 'fadeOutUp'
+                    }, toast, 'Kapat');
+              }],
+              ['<button>Reddet</button>', function(instance, toast, button, e){
+                socket.emit('private_conv_resp',{response: " adlı kişi özel konuşma isteğinizi reddetti.", reciever_id: data.sender_id, sender_name: user});
+                instance.hide({
+                    transitionOut: 'fadeOutUp'
+                    }, toast, 'Kapat');
+              }],
+            ],
+          });
+        });
+        socket.on('private_conv_resp', function(data){
+          iziToast.show({
+            id: 'response',
+            toastOnce: true,
+            icon: 'far fa-envelope-open',
+            message: data.sender_name+data.response,
+            position: 'topRight',
+            buttons: [
+              ['<button>Konuşmayı Başlat</button>', function(instance, toast, button, e){
+                alert("bu özellik için biraz bekleyeceksiniz :)");
+              }]
+            ]
+          })
+        });
+        socket.on('clear_list',function(){
+          $('#mySidenav').empty();
+          $('#mySidenav').append($('<a href="javascript:void(0)" class="closebtn" onclick="closeNav()">').text('X'));
+        });
+        socket.on('update_channel_list', function(channel){
+          if(chnnel == channel){
+            iziToast.show({
+              id: channel,
+              target: '.sidenav',
+              title: channel,
+              message: 'Şu an bu kanaldasınız',
+              toastOnce: true,
+              timeout: false,
+              close: false,
+            });
+          }
+          else {
+            iziToast.show({
+              id: channel,
+              target: '.sidenav',
+              title: channel,
+              toastOnce: true,
+              timeout: false,
+              close: false,
+              buttons: [
+                ['<button>Geçiş yap</button>', function(instance, toast, button, e){
+                  socket.emit('switch_channel',{username: user, new_channel: channel, current_channel: chnnel});
+                  chnnel = channel;
+                  $('#message_container').empty();
+                  document.title = chnnel;
+                  closeNav();
+                }]
+              ]
+            });
+          }
+        });
+        function new_channel(){
+          iziToast.show({
+            id: 'new_channel',
+            toastOnce: true,
+            title: 'Yeni Kanal',
+            message: 'Lütfen yeni kanal için bir isim giriniz.',
+            position: 'topLeft',
+            timeout: false,
+            inputs: [
+                ['<input type="text" placeholder="kanal adı">', 'keyup', function (instance, toast, input, e) {
+                    console.info(input.value);
+                }, true]
+              ],
+            buttons: [
+                ['<button>Kanal Aç</button>', function(instance, toast, button, e, inputs){
+                  if (inputs[0].value.length > 2) socket.emit('new_channel', inputs[0].value);
+                  else{
+                      iziToast.warning({
+                        id: 'no_msg',
+                        title: 'Hata',
+                        toastOnce: true,
+                        message: 'Kanal adı en 3 karakter içermelidir!',
+                        position: 'topLeft',
+                        timeout: 1000
+                      });
+                  }
+                  instance.hide({
+                      transitionOut: 'fadeOutUp'
+                      }, toast, 'Kapat');
+                },]
+            ]
+
+          });
+        }
+        $('#newChannel').on('click', function(){
+          new_channel();
+        });
+
       });
+      function openNav() {
+          document.getElementById("mySidenav").style.width = "250px";
+          document.getElementById("main").style.marginLeft = "250px";
+          document.body.style.backgroundColor = "rgba(0,0,0,0.4)";
+      }
+
+      function closeNav() {
+          document.getElementById("mySidenav").style.width = "0";
+          document.getElementById("main").style.marginLeft = "0";
+          document.body.style.backgroundColor = "white";
+      }
     </script>
   </head>
   <body>
-    <div id="message_container" style="position:relative; bottom:0; padding-bottom:100px;"></div>
-    <div class="text_area" style="position:fixed;bottom:0;"></div>
+    <div id="mySidenav" class="sidenav"></div>
+    <button style="top: 20px; position:fixed;" onclick="openNav()"><i class="fas fa-globe"></i></button>
+    <button style="top: 50px; position:fixed;" id="newChannel"><i class="fas fa-plus-circle"></i></button>
+    <div id="main">
+      <div id="message_container" style="position:relative; bottom:0; padding-bottom:100px;"></div>
+      <div class="text_area" style="position:fixed;bottom:0;"></div>
+  </div>
   </body>
 </html>
