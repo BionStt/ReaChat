@@ -13,6 +13,7 @@ var new_msg;
 app.use('/scripts/izitoast', express.static(__dirname + '/node_modules/izitoast/dist/js'));
 app.use('/styles/izitoast', express.static(__dirname + '/node_modules/izitoast/dist/css'));
 app.use('/styles', express.static(__dirname + '/styles'));
+app.use('/src',express.static(__dirname + '/src'));
 
 app.get('/', function(req, res){
   res.sendFile(__dirname+'/index.html');
