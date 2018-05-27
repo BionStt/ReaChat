@@ -18,13 +18,76 @@ app.get('/', function(req, res){
   res.sendFile(__dirname+'/index.html');
 });
 
+
 io.on('connection', function(socket){
-  socket.on('new_user', function(user){
-    new_uc = user.split(",");
-    socket.join(new_uc[1]);
-    database.add_user(socket.id,new_uc[0],new_uc[1]);
-    socket.in(new_uc[1]).emit('new_user',user);
-    console.log(new_uc[0]+' '+new_uc[1]+' adli kanalda cevrimici oldu!\nid : '+socket.id+'\n');
+  socket.on('switch_channel', function(data){
+    socket.leave(data.current_channel);
+    io.in(data.current_channel).emit('user_gone',data.username);
+    database.join_channel(socket.id, data.new_channel);
+    socket.join(data.new_channel);
+    socket.in(data.new_channel).emit('new_user',data.username);
+    console.log(data.username+' '+'adlı kişi, '+data.new_channel+' kanalına geçiş yaptı.');
+    database.get_messages(data.new_channel, function(err, res){
+      if (err) {
+        throw err;
+      }
+      else{
+        res.forEach(function(data){
+          socket.emit('new_message',{message: data.message, sender_id: data.sender_id, sender_name: data.sender_name});
+        });
+      }
+    });
+    socket.emit('clear_list');
+    database.get_channel_list(function(err,res){
+      if (err) {
+        throw err;
+      }
+      else {
+        res.forEach(function(channel){
+          if (String(channel.channel_name) != "main_gate") {
+            socket.emit('update_channel_list', channel.channel_name);
+          }
+        });
+      }
+    });
+  });
+  socket.on('new_channel',function(data){
+    database.add_channel(data);
+    io.emit('clear_list');
+    database.get_channel_list(function(err,res){
+      if (err) {
+        throw err;
+      }
+      else {
+        res.forEach(function(channel){
+            io.emit('update_channel_list', channel.channel_name);
+        });
+      }
+    });
+  });
+  socket.on('private_conv_resp',function(res){
+    socket.broadcast.to(res.reciever_id).emit('private_conv_resp', {response: res.response, sender_name: res.sender_name});
+  });
+  socket.on('private_conv', function(data){
+    console.log(data.sender_name+"=>"+data.reciever_name);
+    socket.broadcast.to(data.reciever_id).emit('private_conv',{sender_name: data.sender_name, sender_id: socket.id});
+  });
+  socket.on('new_user', function(data){
+    database.add_user(socket.id,data.new_user,data.channel);
+    database.join_channel(socket.id,data.channel);
+    socket.join(data.channel);
+    socket.in(data.channel).emit('new_user',data.new_user);
+    console.log(data.new_user+' '+data.channel+' adli kanalda cevrimici oldu!\nid : '+socket.id+'\n');
+    database.get_channel_list(function(err,res){
+      if (err) {
+        throw err;
+      }
+      else {
+        res.forEach(function(channel){
+          socket.emit('update_channel_list', channel.channel_name);
+        });
+      }
+    });
   });
   socket.on('disconnect', function(){
     database.delete_user(socket.id, function(err,res){
@@ -35,16 +98,15 @@ io.on('connection', function(socket){
         console.log("isimsiz çıkış yapıldı!");
       }
       else{
-        dlt_uc = res.split(",");
-        console.log(dlt_uc[0]+' cevrimdisi oldu!');
-        io.in(dlt_uc[1]).emit('user_gone',dlt_uc[0]);
+        console.log(res.username+' cevrimdisi oldu!');
+        io.in(res.channel).emit('user_gone',res.username);
       }
     });
   });
-  socket.on('new_message', function(msg){
-    new_msg = msg.split("<^>");
-    console.log(msg);
-    io.in(new_msg[1]).emit('new_message',new_msg[0]+","+socket.id);
+  socket.on('new_message', function(data){
+    console.log(data);
+    database.add_message(data.message, socket.id, data.sender_name, data.channel);
+    io.in(data.channel).emit('new_message',{message: data.message, sender_id: socket.id, sender_name: data.sender_name});
   });
 });
 
