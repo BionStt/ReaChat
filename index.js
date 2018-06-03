@@ -21,6 +21,9 @@ app.get('/', function(req, res){
 
 
 io.on('connection', function(socket){
+  socket.on('disconnection_request', function(){
+    socket.disconnect();
+  });
   socket.on('edit-together',function(data){
     console.log(data);
     io.emit('edit-together', 'connected');
