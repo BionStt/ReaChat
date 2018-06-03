@@ -21,6 +21,10 @@ app.get('/', function(req, res){
 
 
 io.on('connection', function(socket){
+  socket.on('edit-together',function(data){
+    console.log(data);
+    io.emit('edit-together', 'connected');
+  });
   socket.on('switch_channel', function(data){
     socket.leave(data.current_channel);
     io.in(data.current_channel).emit('user_gone',data.username);
@@ -53,7 +57,7 @@ io.on('connection', function(socket){
     });
   });
   socket.on('new_channel',function(data){
-    database.add_channel(data);
+    database.add_channel(data.channel, socket.id);
     io.emit('clear_list');
     database.get_channel_list(function(err,res){
       if (err) {
@@ -61,7 +65,29 @@ io.on('connection', function(socket){
       }
       else {
         res.forEach(function(channel){
-            io.emit('update_channel_list', channel.channel_name);
+            io.emit('update_channel_list', channel.channel_name, channel.created_by);
+        });
+      }
+    });
+  });
+  socket.on('switch_channel_req',function(data){
+    socket.broadcast.to(data.createdby).emit('switch_channel_req',{username: data.username, current_channel: data.new_channel, socket_id: socket.id});
+  });
+  socket.on('switch_channel_res',function(data){
+    socket.broadcast.to(data.socket_id).emit('switch_channel_res',{response: data.response, username: data.username,channel_name: data.channel_name});
+  });
+  socket.on('delete_channel',function(data){
+    socket.in(data.channel_name).emit('delete_channel',{channel_name: data.channel_name, user: data.username});
+    database.delete_channel(data.channel_name);
+    database.delete_messages(data.channel_name);
+    io.emit('clear_list');
+    database.get_channel_list(function(err,res){
+      if (err) {
+        throw err;
+      }
+      else {
+        res.forEach(function(channel){
+            io.emit('update_channel_list', channel.channel_name, channel.created_by);
         });
       }
     });
@@ -111,6 +137,6 @@ io.on('connection', function(socket){
   });
 });
 
-http.listen(80, function(){
-  console.log('Listening on *:80');
+http.listen(3000, function(){
+  console.log('Listening on *:3000');
 });

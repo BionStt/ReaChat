@@ -28,11 +28,11 @@ module.exports = {
       });
     });
   },
-  add_channel : function(channel){
+  add_channel : function(channel, createdby){
     mongodb.connect(url, function(err,db){
       if(err) throw err;
       dbo = db.db('chatdb');
-      dbo.collection("channels").insertOne({channel_name: channel}, function(err,res){
+      dbo.collection("channels").insertOne({channel_name: channel, created_by: createdby}, function(err,res){
         if (err) {
           throw err;
         }
@@ -106,6 +106,32 @@ module.exports = {
         else {
           callback(null,res);
         }
+      });
+      db.close();
+    });
+  },
+  delete_messages: function(chnnel){
+    mongodb.connect(url, function(err,db){
+      if(err) throw err;
+      dbo = db.db('chatdb');
+      dbo.collection("messages").deleteMany({channel:chnnel}, function(err,res){
+        if (err) {
+              throw err;
+        }
+        console.log(chnnel+" adlı kanaldaki mesajlar silindi.");
+      });
+      db.close();
+    });
+  },
+  delete_channel: function(chnnel){
+    mongodb.connect(url, function(err,db){
+      if(err) throw err;
+      dbo = db.db('chatdb');
+      dbo.collection("channels").deleteMany({channel_name: chnnel}, function(err,res){
+        if (err) {
+              throw err;
+        }
+        console.log(chnnel+" adlı kanal silindi.");
       });
       db.close();
     });

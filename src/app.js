@@ -134,7 +134,6 @@ $(function(){
                   },]
               ]
           });
-          openNav();
         }
       });
   });
@@ -188,7 +187,7 @@ $(function(){
     $('#mySidenav').empty();
     $('#mySidenav').append($('<a href="javascript:void(0)" class="closebtn" onclick="closeNav()">').text('X'));
   });
-  socket.on('update_channel_list', function(channel){
+  socket.on('update_channel_list', function(channel, created_by){
     if(chnnel == channel){
       iziToast.show({
         id: channel,
@@ -200,7 +199,7 @@ $(function(){
         close: false,
       });
     }
-    else {
+    else if(created_by == socket_id) {
       iziToast.show({
         id: channel,
         target: '.sidenav',
@@ -215,10 +214,123 @@ $(function(){
             $('#message_container').empty();
             document.title = chnnel;
             closeNav();
+          }],
+          ['<button>Sil</button>', function(instance, toast, button, e){
+            iziToast.show({
+              id: 'delete_channel_q',
+              title: channel,
+              message: "Kanalı silmek istediğinize emin misiniz?",
+              toastOnce: true,
+              close: false,
+              buttons: [
+                ['<button>EVET</button>', function(instance, toast, button, e){
+                  socket.emit('delete_channel',{username: user, channel_name: channel});
+                }],
+                ['<button>IPTAL</button>', function(instance, toast, button, e){
+                  instance.hide({
+                      transitionOut: 'fadeOutUp'
+                      }, toast, 'Kapat');
+                }]
+              ]
+            });
           }]
         ]
       });
     }
+    else{
+      iziToast.show({
+        id: channel,
+        target: '.sidenav',
+        title: channel,
+        toastOnce: true,
+        timeout: false,
+        close: false,
+        buttons: [
+          ['<button>Istek Gonder</button>', function(instance, toast, button, e){
+            socket.emit('switch_channel_req',{username: user, new_channel: channel, current_channel: chnnel, createdby: created_by, socketid: socket_id});
+            // chnnel = channel;
+            // $('#message_container').empty();
+            // document.title = chnnel;
+            // closeNav();
+          }],
+        ]
+      });
+    }
+  });
+  socket.on('switch_channel_req',function(data){
+    iziToast.show({
+      title: "Kanal geçiş isteği",
+      position: 'topRight',
+      message: data.username+" adlı kişi, "+data.current_channel+" adlı kanala geçiş yapmak istiyor.",
+      close: false,
+      buttons: [
+        ['<button>Kabul Et</button>', function(instance, toast, button, e){
+          socket.emit('switch_channel_res',{username: user, channel_name: data.current_channel, socket_id: data.socket_id, response: "accepted"});
+          instance.hide({
+              transitionOut: 'fadeOutUp'
+              }, toast, 'Kapat');
+        }],
+        ['<button>Reddet</button>', function(instance, toast, button, e){
+          socket.emit('switch_channel_res',{username: user, channel_name: chnnel, socket_id: data.socket_id, response: "rejected"});
+          instance.hide({
+              transitionOut: 'fadeOutUp'
+              }, toast, 'Kapat');
+        }]
+      ]
+    });
+  });
+  socket.on('switch_channel_res',function(data){
+    if (String(data.response) == String("accepted")) {
+      iziToast.show({
+        title: data.channel_name,
+        message: data.username+" adlı kişi geçiş isteğinizi onayladı.",
+        timeout: false,
+        close: false,
+        position: 'topRight',
+        buttons: [
+          ['<button>Geçiş Yap</button>', function(instance, toast, button, e){
+            socket.emit('switch_channel',{username: user, new_channel: data.channel_name,  current_channel: chnnel});
+            chnnel = channel;
+            $('#message_container').empty();
+            document.title = chnnel;
+            closeNav();
+          }],
+          ['<button>IPTAL</button>', function(instance, toast, button, e){
+            instance.hide({
+                transitionOut: 'fadeOutUp'
+                }, toast, 'Kapat');
+          }]
+        ]
+      });
+    }
+    else{
+      iziToast.warning({
+        title: data.channel_name,
+        message: data.username+" adlı kişi geçiş isteğinizi onaylamadı.",
+        timeout: 5000,
+        close: false,
+        position: 'topRight',
+        buttons: [
+          ['<button>TAMAM</button>', function(instance, toast, button, e){
+            instance.hide({
+                transitionOut: 'fadeOutUp'
+                }, toast, 'Kapat');
+          }]
+        ]
+      });
+    }
+  });
+  socket.on('delete_channel',function(data){
+    iziToast.show({
+      title: data.channel_name,
+      message: "Bu kanal "+data.user+" adlı kişi tarafından silindi!",
+      position: 'center',
+      timeout: 9000
+    });
+    socket.emit('switch_channel',{username: user, new_channel: "main_gate", channel_name: data.channel_name});
+    chnnel = "main_gate";
+    $('#message_container').empty();
+    document.title = chnnel;
   });
   function new_channel(){
     iziToast.show({
@@ -235,7 +347,7 @@ $(function(){
         ],
       buttons: [
           ['<button>Kanal Aç</button>', function(instance, toast, button, e, inputs){
-            if (inputs[0].value.length > 2) socket.emit('new_channel', inputs[0].value);
+            if (inputs[0].value.length > 2) socket.emit('new_channel', {channel: inputs[0].value, created_by: socket_id});
             else{
                 iziToast.warning({
                   id: 'no_msg',
@@ -254,7 +366,7 @@ $(function(){
 
     });
   }
-  $('#newChannel').on('click', function(){
+  $('#mySidenav').on('click','#newChannel', function(){
     new_channel();
   });
 
