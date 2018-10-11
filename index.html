@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/solid.css" integrity="sha384-Rw5qeepMFvJVEZdSo1nDQD5B6wX0m7c5Z/pLNvjkB14W6Yki1hKbSEQaX9ffUbWe" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/fontawesome.css" integrity="sha384-GVa9GOgVQgOk+TNYXu7S/InPTfSDTtBalSgkgqQ7sCik56N9ztlkoTr2f/T44oKV" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/regular.css" integrity="sha384-EWu6DiBz01XlR6XGsVuabDMbDN6RT8cwNoY+3tIH+6pUCfaNldJYJQfQlbEIWLyA" crossorigin="anonymous">
-
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
@@ -38,5 +38,28 @@
       <div id="message_container" style="position:relative; bottom:0; padding-bottom:100px;"></div>
       <div class="text_area" style="position:fixed;bottom:0;"></div>
   </div>
+  <center><div class="container-fluid" style="bottom: 0px;position: fixed;background-color: light-grey;height: 200px;">
+
+      <div class="container-fluid" style="position: absolute; bottom: 0px; background-color: grey; width: %100;">
+        <div class="type_msg">
+            <div class="input_msg_write">
+              <form id="msg_form">
+          <!--    <input id="write_msg" placeholder="Type a message" type="text"> -->
+              <div class="input-group mb-3">
+                <input type="text" class="form-control" id="write_msg" aria-label="mesajınız" placeholder="MESAJ">
+                <div class="input-group-append">
+              <!--    <span class="input-group-text">.00</span> -->
+                  <input id="msg_send_btn" class="btn btn-block" type="submit" value="GÖNDER">
+                  <span>
+                  <i class="fa fa-paper-plane-o"  aria-hidden="true"></i>
+                </span>
+                </div>
+              </div>
+            </form>
+            </div>
+          </div>
+  </div>
+</div>
+</center>
   </body>
 </html>

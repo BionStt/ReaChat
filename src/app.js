@@ -4,7 +4,12 @@ $(function(){
     var socket_id;
     var chnnel;
     var i=0;
-
+  $('.input_msg_write').on('submit', '#msg_form', function(event){
+    let message = $('#write_msg').val();
+    event.preventDefault();
+    socket.emit('new_message', {sender_name: user, message: message, channel: chnnel});
+    $('#write_msg').val('');
+  });
   $('#message_container').on('click','.name',function(event){
     iziToast.show({
       title: event.target.textContent,
@@ -100,40 +105,43 @@ $(function(){
         },
         onClosing: function(instance, toast, closedBy){
             console.info('closedBy: ' + closedBy);
-            iziToast.show({
-              id: 'message_box',
-              title: user,
-              timeout: false,
-              theme: 'dark',
-              zindex: 999,
-              position: 'bottomCenter',
-              target: '.text_area',
-              close: false,
-              drag: false,
-              toastOnce: true,
-              inputs: [
-                  ['<input type="text">', 'keyup', function (instance, toast, input, e) {
-                      console.info(input.value);
-                  }, true]
-                ],
-              buttons: [
-                  ['<button>GÖNDER</button>', function(instance, toast, button, e, inputs){
-                    if (inputs[0].value.length > 2) socket.emit('new_message', {sender_name: user, message: inputs[0].value, channel: chnnel});
-                    else{
-                        iziToast.warning({
-                          id: 'no_msg',
-                          title: 'Hata',
-                          toastOnce: true,
-                          message: 'Boş mesaj Gönderemezsiniz',
-                          position: 'bottomCenter',
-                          target: '#message_container',
-                          timeout: 1000
-                        });
-                    }
-                    inputs[0].value = " ";
-                  },]
-              ]
-          });
+          //   iziToast.show({
+          //     id: 'message_box',
+          //     title: user,
+          //     timeout: false,
+          //     theme: 'dark',
+          //     zindex: 999,
+          //     position: 'bottomCenter',
+          //     target: '.text_area',
+          //     close: false,
+          //     drag: false,
+          //     toastOnce: true,
+          //     inputs: [
+          //         ['<input type="text">', 'keyup', function (instance, toast, input, e) {
+          //             console.info(input.value);
+          //         }, true]
+          //       ],
+          //     buttons: [
+          //         ['<button>GÖNDER</button>', function(instance, toast, button, e, inputs){
+          //           if (inputs[0].value.length > 2) socket.emit('new_message', {sender_name: user, message: inputs[0].value, channel: chnnel});
+          //           else{
+          //               iziToast.warning({
+          //                 id: 'no_msg',
+          //                 title: 'Hata',
+          //                 toastOnce: true,
+          //                 message: 'Boş mesaj Gönderemezsiniz',
+          //                 position: 'bottomCenter',
+          //                 target: '#message_container',
+          //                 timeout: 1000
+          //               });
+          //           }
+          //           inputs[0].value = " ";
+          //         },]
+          //     ]
+          // });
+
+
+
         }
       });
   });
@@ -257,6 +265,7 @@ $(function(){
       });
     }
   });
+
   socket.on('switch_channel_req',function(data){
     iziToast.show({
       title: "Kanal geçiş isteği",
