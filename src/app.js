@@ -10,23 +10,23 @@ $(function(){
     socket.emit('new_message', {sender_name: user, message: message, channel: chnnel});
     $('#write_msg').val('');
   });
-  $('#message_container').on('click','.name',function(event){
-    iziToast.show({
-      title: event.target.textContent,
-      timeout: 10000,
-      message: 'Özel konuşma isteği gönder',
-      buttons: [
-        ['<button>EVET</button>', function(instance, toast, button, e, inputs){
-          socket.emit('private_conv',{sender_name: user, reciever_id: event.target.classList[1], reciever_name: event.target.textContent});
-          instance.hide({
-              transitionOut: 'fadeOutUp'
-            }, toast, 'evet');
-        }
-      ]
-    ],
-    position: 'topRight',
-  });
-  });
+//  $('#message_container').on('click','.name',function(event){
+//    iziToast.show({
+//      title: event.target.textContent,
+//      timeout: 10000,
+//      message: 'Özel konuşma isteği gönder',
+//      buttons: [
+//        ['<button>EVET</button>', function(instance, toast, button, e, inputs){
+//          socket.emit('private_conv',{sender_name: user, reciever_id: event.target.classList[1], reciever_name: event.target.textContent});
+//          instance.hide({
+//              transitionOut: 'fadeOutUp'
+//            }, toast, 'evet');
+//        }
+//      ]
+//    ],
+//    position: 'topRight',
+//  });
+//  });
 
   socket.on('new_message', function(data){
     i=i+1;
